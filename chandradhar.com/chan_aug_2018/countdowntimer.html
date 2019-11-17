@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>  
+            <title>Countdown Timer App by Chandradhar</title>
+       		  <meta charset="UTF-8"> 
+            <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
+            <script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>  
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.24.0/babel.js"></script>
+            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+            <a href="game/web.html" class="fas fa-arrow-circle-left"></a> 
+            <a href="index.html" class="fas fa-home"></a>
+            <a href="https://github.com/chandradhargowtham" class="fab fa-github-square"></a>
+
+  </head>  
+  <body style="text-align:center; background-color:#a7b3a5" >  
+
+      <div id="root" >
+        
+
+      </div>
+      <style>
+
+        h1 {
+          color: #f4f4f4;
+        }
+        .root {
+          color: #f4f4f4;
+          
+        }
+
+        h2{
+          color:white;
+         font-size: 72px; 
+        }
+        .refresh{
+          position: absolute;
+    bottom: 10px;
+    
+    
+        }
+
+      </style>
+      <script type="text/babel">  
+        
+    
+   ReactDOM.render(<h1 >Countdown Timer </h1>,document.getElementById("root"))
+ {var num = prompt("How many seconds should the timer Run?");}
+ var timer=num
+
+
+    function updateNum(){
+    if(num>0){
+
+        ReactDOM.render(
+			
+            <div><h1>Countdown Timer Running </h1><h2>{num--}</h2> seconds left</div>,
+            document.getElementById("root")
+        
+        )
+    }
+	
+	else if(num==0){ReactDOM.render(
+			
+            <div><h1>Countdown Timer for {timer} Seconds </h1><h2>DONE</h2></div>,
+            document.getElementById("root"))}
+    else if(num<0){
+            ReactDOM.render(<div>
+			<h1>Invalid Input </h1>{num=prompt("Invalid Input. Try again")}</div>,
+			document.getElementById("root")
+            )
+        }
+        else {
+            ReactDOM.render(<div>
+      <h1>Invalid Input </h1>{num=prompt("Invalid Input. Try again")}</div>,
+      document.getElementById("root")
+            )
+        }
+	
+}
+   setInterval(updateNum,1000)
+ 
+
+   
+      </script>
+      <div id="refresh"><input type="button" value="Refresh" onClick="window.location.reload()"></div>
+      </body>
+      </html>

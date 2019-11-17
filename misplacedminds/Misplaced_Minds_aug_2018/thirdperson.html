@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>10 Steps To Set Up Third Person Camera In UDK</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="css/reset.css" type="text/css" media="all">
+		<link rel="stylesheet" href="css/layout.css" type="text/css" media="all">
+		<link rel="stylesheet" href="css/tutorials.css" type="text/css" media="all">
+		<script type="text/javascript" src="js/jquery-1.6.js" ></script>
+		<script type="text/javascript" src="js/cufon-yui.js"></script>
+		<script type="text/javascript" src="js/cufon-replace.js"></script>
+		<script type="text/javascript" src="js/Vegur_300.font.js"></script>
+		<script type="text/javascript" src="js/PT_Sans_700.font.js"></script>
+		<script type="text/javascript" src="js/PT_Sans_400.font.js"></script>
+		<script type="text/javascript" src="js/atooltip.jquery.js"></script>
+		<!--[if lt IE 9]>
+		<script type="text/javascript" src="js/html5.js"></script>
+		<link rel="stylesheet" href="css/ie.css" type="text/css" media="all">
+		<![endif]-->
+		<!--[if lt IE 7]>
+			<div style=' clear: both; text-align:center; position: relative;'>
+				<a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode"><img src="http://storage.ie6countdown.com/assets/100/images/banners/warning_bar_0000_us.jpg" border="0" height="42" width="820" alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today." /></a>
+			</div>
+		<![endif]-->
+	</head>
+	<body id="page3">
+		<div class="main">
+<!--header -->
+			<header>
+				<div class="wrapper">
+					<h1><a href="index.html" id="logo">Magnetic Thumbs</a></h1>
+
+				</div>
+				<nav>
+					<ul id="menu">
+						<li><a href="index.html"><span>Home</span></a></li>
+						<li class="active"><a href="tutorials.html"><span>Tutorials</span></a></li>
+						<li><a href="blog.html"><span>Blog</span></a></li>
+						<li><a href="apps.html"><span>Apps</span></a></li>
+						<li class="last"><a href="contact.html"><span>Contact Us</span></a></li>
+					</ul>
+				</nav>
+			</header>
+<!--header end-->
+<!--content -->
+							</div>
+			</article>
+		</div>
+		<div class="bg1">
+			<div class="main">
+				<article id="content2">
+					<div class="wrapper">
+						<h3>10 Easy Steps To Create a Third Person Camera In UDK: </h3><br>
+						<img src="images/tutorials/Thirdperson/1.png" alt="thirdpersoncamera"/> 
+
+<br><br>Creating a third person camera in UDK may seem to be a very tough task for an absolute beginner. In fact, it isn't a very difficult task. If you understand what is going on, it is fun changing the camera views and settings. In this tutorial, you'll not only learn how to set up a third person camera but also adjust the co-ordinates (camera distance from player).
+<br><br><h3>What we are going to do:</h3><br>
+1.	Modify the UC scripts and.ini files to change the camera from default first person to third person.<br>
+2.	This method is applicable for setting up any camera view (including All in One camera)<br><br>
+<h3>Important Note-1:</h3> The purpose of this tutorial is to help you set up the camera view into third person. To make it as simple as possible, very less explanation of the code is given. <br>
+<br><h3>Important Note-2:</h3> <br>
+1.	To be able to view the changes, the levels should be saved with the prefix "UDN" (UDN-Demo.udk)<br>
+2.	Go to View Menu ->World Properties -> Game Type and set "Game Type for PIE" to UDNGame. (This cannot be edited now. Remember this point till the end of this tutorial.After completing the steps given below successfully, you should use this.)<br><br><br>
+<img src="images/tutorials/Thirdperson/2.png" alt="worldproperties"/> 
+
+
+<h3>Getting Started: </h3>
+1.	Create a folder named "magneticthumbs" (You can use whatever name you want).<br>
+2.	Given are the codes for three files UDNPawn.uc, UDNPlayerController.uc and UDNGame.uc<br>
+3.	Create another folder called "Classes" inside "magneticthumbs" .<br>
+4.	Open Notepad and paste these codes and save them with respective titles.<br>
+5.	Codes: <br><h2>UDNGame.uc</h2><br><br>
+<textarea cols="80" rows="20"readonly="readonly">
+class UDNGame extends UTDeathMatch;
+
+defaultproperties
+{
+   DefaultPawnClass=class'magneticthumbs.UDNPawn'
+   PlayerControllerClass=class'magneticthumbs.UDNPlayerController'
+   MapPrefixes[0]="UDN"
+
+</textarea><br><br><h2>UDNPawn.uc:</h2> <br><br>
+<textarea cols="80" rows="20"readonly="readonly">
+class UDNPawn extends UTPawn;
+
+//override to make player mesh visible by default
+simulated event BecomeViewTarget( PlayerController PC )
+{
+   local UTPlayerController UTPC;
+
+   Super.BecomeViewTarget(PC);
+
+   if (LocalPlayer(PC.Player) != None)
+   {
+      UTPC = UTPlayerController(PC);
+      if (UTPC != None)
+      {
+         //set player controller to behind view and make mesh visible
+         UTPC.SetBehindView(true);
+         SetMeshVisibility(UTPC.bBehindView);
+      }
+   }
+}
+
+simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
+{
+   local vector CamStart, HitLocation, HitNormal, CamDirX, CamDirY, CamDirZ, CurrentCamOffset;
+   local float DesiredCameraZOffset;
+
+   CamStart = Location;
+   CurrentCamOffset = CamOffset;
+
+   DesiredCameraZOffset = (Health > 0) ? 1.2 * GetCollisionHeight() + Mesh.Translation.Z : 0.f;
+   CameraZOffset = (fDeltaTime < 0.2) ? DesiredCameraZOffset * 5 * fDeltaTime + (1 - 5*fDeltaTime) * CameraZOffset : DesiredCameraZOffset;
+   
+   if ( Health <= 0 )
+   {
+      CurrentCamOffset = vect(0,0,0);
+      CurrentCamOffset.X = GetCollisionRadius();
+   }
+
+   CamStart.Z += CameraZOffset;
+   GetAxes(out_CamRot, CamDirX, CamDirY, CamDirZ);
+   CamDirX *= CurrentCameraScale;
+
+   if ( (Health <= 0) || bFeigningDeath )
+   {
+      // adjust camera position to make sure it's not clipping into world
+      // @todo fixmesteve.  Note that you can still get clipping if FindSpot fails (happens rarely)
+      FindSpot(GetCollisionExtent(),CamStart);
+   }
+   if (CurrentCameraScale < CameraScale)
+   {
+      CurrentCameraScale = FMin(CameraScale, CurrentCameraScale + 5 * FMax(CameraScale - CurrentCameraScale, 0.3)*fDeltaTime);
+   }
+   else if (CurrentCameraScale > CameraScale)
+   {
+      CurrentCameraScale = FMax(CameraScale, CurrentCameraScale - 5 * FMax(CameraScale - CurrentCameraScale, 0.3)*fDeltaTime);
+   }
+
+   if (CamDirX.Z > GetCollisionHeight())
+   {
+      CamDirX *= square(cos(out_CamRot.Pitch * 0.0000958738)); // 0.0000958738 = 2*PI/65536
+   }
+
+   out_CamLoc = CamStart - CamDirX*CurrentCamOffset.X + CurrentCamOffset.Y*CamDirY + CurrentCamOffset.Z*CamDirZ;
+
+   if (Trace(HitLocation, HitNormal, out_CamLoc, CamStart, false, vect(12,12,12)) != None)
+   {
+      out_CamLoc = HitLocation;
+   }
+
+   return true;
+}   
+
+defaultproperties
+{
+
+}
+</textarea><br><br>
+<h2>UDNPlayerController.uc</h2><br><br>
+<textarea cols="80" rows="20"readonly="readonly">
+class UDNPlayerController extends UTPlayerController;
+
+state PlayerWalking
+{
+ignores SeePlayer, HearNoise, Bump;
+
+   function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
+   {
+      if( Pawn == None )
+      {
+         return;
+      }
+
+      if (Role == ROLE_Authority)
+      {
+         // Update ViewPitch for remote clients
+         Pawn.SetRemoteViewPitch( Rotation.Pitch );
+      }
+
+      Pawn.Acceleration = NewAccel;
+
+      CheckJumpOrDuck();
+   }
+}
+
+function UpdateRotation( float DeltaTime )
+{
+   local Rotator   DeltaRot, newRotation, ViewRotation;
+
+   ViewRotation = Rotation;
+   if (Pawn!=none)
+   {
+      Pawn.SetDesiredRotation(ViewRotation);
+   }
+
+   // Calculate Delta to be applied on ViewRotation
+   DeltaRot.Yaw   = PlayerInput.aTurn;
+   DeltaRot.Pitch   = PlayerInput.aLookUp;
+
+   ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+   SetRotation(ViewRotation);
+
+   NewRotation = ViewRotation;
+   NewRotation.Roll = Rotation.Roll;
+
+   if ( Pawn != None )
+      Pawn.FaceRotation(NewRotation, deltatime);
+}   
+
+defaultproperties
+{
+}
+
+
+</textarea><br><br>
+
+6.Paste the entire folder "magneticthumbs" in C:/UDK/UDK -xxxx-xx /Development/Src<br>
+7.	Navigate to C: /UDK/UDK -xxxx-xx /UDK Game/config (Hoping that you've installed UDK in its default location).<br>
+8.	Now replace the files DefaultEngine.ini, DefaultGame.ini and UDKGame.ini with these codes.<br>
+9.	Codes:<br><br><h2>DefaultEngine.ini</h2><br><br>
+<textarea cols="110" rows="20"readonly="readonly">
+[Configuration]
+BasedOn=..\UDKGame\Config\DefaultEngineUDK.ini
+
+[URL]
+MapExt=udk
+; Any additional map extension to support for map loading.  
+; Maps without an extension always saved with the above MapExt
+AdditionalMapExt=mobile
+Map=UDKFrontEndMap.udk
+LocalMap=UDKFrontEndMap.udk
+TransitionMap=EnvyEntry.udk
+EXEName=UTGame.exe
+DebugEXEName=DEBUG-UTGame.exe
+
+[Engine.ScriptPackages]
++NonNativePackages=UTGame
++NonNativePackages=UTGameContent
+
+[Core.System]
++Extensions=mobile
+
+[Engine.DemoRecDriver]
+DemoSpectatorClass=UTGame.DemoRecSpectator
+
+[UnrealEd.EditorEngine]
++EditPackages=UTGame
++EditPackages=UTGameContent
++EditPackages=magneticthumbs
+
+[Engine.Engine]
+ConsoleClassName=UTGame.UTConsole
+ScoutClassName=UTGame.UTScout
+GameViewportClientClassName=UTGame.UTGameViewportClient
+DefaultPostProcessName=FX_HitEffects.UTPostProcess_PC
+ApexDamageParamsName=UDK_APEXDamageMap.UDKDamageMap
+bUseStreamingPause=true
+
+[PlatformInterface]
+FacebookIntegrationClassName=WinDrv.FacebookWindows
+
+[FacebookIntegration]
+AppID=169315946448309
+
+[Engine.SeqAct_Interp]
+; These control the default rendering overrides for matinee's with director tracks
+; By default, no features are disabled for UDK as that would be unintuitive for UDK users
+RenderingOverrides=(bAllowAmbientOcclusion=True,bAllowDominantWholeSceneDynamicShadows=True,bAllowMotionBlurSkinning=True)
+
+[Engine.PackagesToAlwaysCook]
++Package=EnvyEntry
+
+[Engine.StartupPackages]
++Package=FX_HitEffects
++Package=UDKFonts
++Package=UTGame
+
+[Engine.PackagesToForceCookPerMap]
+.Map=UDKFrontEndMap
+.Package=UDKFrontEnd
+.Package=UI_FrontEnd_Art
+
+[Engine.DataStoreClient]
++GlobalDataStoreClasses=UTGame.UTUIDataStore_StringAliasMap
++PlayerDataStoreClassNames=UTGame.UTUIDataStore_StringAliasBindingsMap
++GlobalDataStoreClasses=UTGame.UTUIDataStore_StringList
++GlobalDataStoreClasses=UTGame.UTUIDataStore_Options
++GlobalDataStoreClasses=UTGame.UTUIDataStore_MenuItems
++GlobalDataStoreClasses=UTGame.UTDataStore_GameSettingsDM
++GlobalDataStoreClasses=UTGame.UTDataStore_GameSearchDM
+
+[Windows.StandardUser]
+MyDocumentsSubDirName=Unreal Tournament 3
+
+[ConfigCoalesceFilter]
++FilterOut=UTEditorKeyBindings.ini
++FilterOut=UTEditorUserSettings.ini
+
+[FullScreenMovie]
++StartupMovies=UDKFrontEnd.udk_loading
++LoadMapMovies=UDKFrontEnd.udk_loading
+
+[Engine.GameViewportClient]
+
+
+[VoIP]
+VolumeThreshold=0.1
+bHasVoiceEnabled=true
+
+[MobileSupport]
+bShouldCachePVRTCTextures=False
+bShouldCacheATITCTextures=False
+bShouldCacheFlashTextures=False
+
+[OnlineSubsystemSteamworks.OnlineSubsystemSteamworks]
+bUseVAC=true
+bRelaunchInSteam=false
+RelaunchAppId=0
+GameDir=unrealtest
+GameVersion=1.0.0.0
+Region=255
+CurrentNotificationPosition=8
+ResetStats=0
+bFilterEngineBuild=false
+VOIPVolumeMultiplier=4.0
++AchievementMappings=(AchievementId=0,AchievementName=EUTA_EXPLORE_EveryMutator,ViewId=30,ProgressCount=0,MaxProgress=0,bAutoUnlock=False)
++AchievementMappings=(AchievementId=1,AchievementName=EUTA_WEAPON_DontTaseMeBro,ViewId=30,ProgressCount=2,MaxProgress=4,bAutoUnlock=True)
++AchievementMappings=(AchievementId=2,AchievementName=EUTA_WEAPON_StrongestLink,ViewId=30,ProgressCount=2,MaxProgress=4,bAutoUnlock=True)
++AchievementMappings=(AchievementId=3,AchievementName=EUTA_WEAPON_HaveANiceDay,ViewId=30,ProgressCount=2,MaxProgress=4,bAutoUnlock=True)
++AchievementMappings=(AchievementId=4,AchievementName=EUTA_VEHICLE_Armadillo,ViewId=30,ProgressCount=2,MaxProgress=4,bAutoUnlock=True)
++AchievementMappings=(AchievementId=5,AchievementName=EUTA_POWERUP_DeliveringTheHurt,ViewId=30,ProgressCount=30,MaxProgress=60,bAutoUnlock=True)
++AchievementMappings=(AchievementId=6,AchievementName=EUTA_HUMILIATION_SerialKiller,ViewId=30,ProgressCount=0,MaxProgress=1,bAutoUnlock=True)
++AchievementMappings=(AchievementId=7,AchievementName=EUTA_HUMILIATION_OffToAGoodStart,ViewId=30,ProgressCount=0,MaxProgress=1,bAutoUnlock=True)
++LeaderboardNameMappings=(ViewId=35,LeaderboardName="Deathmatch")
++LeaderboardNameMappings=(ViewId=36,LeaderboardName="Team Deathmatch")
++LeaderboardNameMappings=(ViewId=37,LeaderboardName="Capture The Flag")
+
+[OnlineSubsystemSteamworks.OnlineGameInterfaceSteamworks]
++FilterKeyToSteamKeyMap=(KeyId=1,KeyType=OGSET_LocalizedSetting,RawKey="",SteamKey="map")
++FilterKeyToSteamKeyMap=(KeyId=14,KeyType=OGSET_LocalizedSetting,RawKey="",SteamKey="dedicated",IgnoreValue="0")
++FilterKeyToSteamKeyMap=(KeyId=12,KeyType=OGSET_LocalizedSetting,RawKey="",SteamKey="full",bReverseFilter=true,IgnoreValue="0")
++FilterKeyToSteamKeyMap=(KeyId=13,KeyType=OGSET_LocalizedSetting,RawKey="",SteamKey="empty",bReverseFilter=true,IgnoreValue="0")
++FilterKeyToSteamKeyMap=(KeyType=OGSET_ObjectProperty,RawKey="bAntiCheatProtected",SteamKey="secure",IgnoreValue="0")
+
+[OnlineSubsystemLive.OnlineSubsystemLive]
+NumLogins=1
+CurrentNotificationPosition=NNP_BottomRight
+MaxLocalTalkers=2
+MaxRemoteTalkers=9
+bShouldLogArbitrationData=true
+bShouldLogStatsData=true
+LanQueryTimeout=3.0
+LanPacketPlatformMask=1
+LanGameUniqueId=1297287213
+bShouldUseMcp=false
+
+[OnlineSubsystemGameSpy.OnlineSubsystemGameSpy]
+bHasGameSpyAccount=true
+EncryptedProductKey=NotForShip
+ProfileDataDirectory=../UDKGame/SaveData
+ProfileDataExtension=.ue3profile
+ProductID=11097
+NamespaceID=40
+PartnerID=33
+GameID=1727
+StatsVersion=7
+NickStatsKeyId=1
+PlaceStatsKeyId=2
++LocationUrlsForInvites="ut3pc"
+LocationUrl="ut3pc"
+bShouldUseMcp=true
+// Example stats key mappings, not used in UDK
+//1 PlayerDM --- TABLE
++StatsKeyMappings=(ViewId=1,PropertyId=0,KeyId=262)
+//1 PlayerDM_Event_Bullseye
++StatsKeyMappings=(ViewId=1,PropertyId=0x10000142,KeyId=265)
+
+[Engine.GameEngine]
+bEnableSecondaryDisplay=false
+bEnableSecondaryViewport=false
+SecondaryViewportClientClassName=GameFramework.MobileSecondaryViewportClient
+
+[SystemSettings]
+; UT uses a floating first person weapon so we don't want it to shadow the world
+bEnableForegroundShadowsOnWorld=False
+MobileColorGrading=True
+
+</textarea><br><br><h2>DefaultGame.ini</h2><br><br>
+
+<textarea cols="110" rows="20"readonly="readonly">
+[Configuration]
+BasedOn=..\UDKGame\Config\DefaultGameUDK.ini
+
+[Engine.GameInfo]
+DefaultGame=magneticthumbs.UDNGame
+DefaultServerGame=magneticthumbs.UDNGame
+PlayerControllerClassName=UDKBase.SimplePC
+GameDifficulty=+1.0
+MaxPlayers=32
+DefaultGameType="UTGame.UTDeathmatch";
++DefaultMapPrefixes=(Prefix="DM",bUsesCommonPackage=FALSE,GameType="UTGame.UTDeathmatch")
++DefaultMapPrefixes=(Prefix="CTF",bUsesCommonPackage=FALSE,GameType="UTGameContent.UTCTFGame_Content")
++DefaultMapPrefixes=(Prefix="VCTF",bUsesCommonPackage=FALSE,GameType="UTGameContent.UTVehicleCTFGame_Content")
+
+[Engine.AutoTestManager]
+NumAutomatedMapTestingCycles=0
++AutomatedMapTestingList=CTF-Hydrosis
++AutomatedMapTestingList=DM-Defiance
++AutomatedMapTestingList=VCTF-Kargo
++AutomatedMapTestingList=WAR-Avalanche
++AutomatedMapTestingList=WAR-Torlan
+
+[Engine.WorldInfo]
+DecalManagerClassPath="UTGame.UTDecalManager"
+bNoMobileMapWarnings=False
+
+[UTGame.UTPawn]
+Bob=0.010
+bWeaponBob=true
+
+[magneticthumbs.UDNPlayerController]
+bAutoTaunt=false
+bLandingShake=true
+PawnShadowMode=SHADOW_All
+AutoObjectivePreference=AOP_NoPreference
+bUseVehicleRotationOnPossess=true
+bFirstPersonWeaponsSelfShadow=true
+DefaultControlModuleClass=magneticthumbs.UDNControlModule_SideScrolling
+
+[UTGame.UTConsolePlayerController]
+bTargetAdhesionEnabled=TRUE
+bDebugTargetAdhesion=FALSE
+
+[UTGame.DemoRecSpectator]
+bLockRotationToViewTarget=false
+bAutoSwitchPlayers=false
+AutoSwitchPlayerInterval=0
+
+[UTGame.UTDeathMessage]
+bNoConsoleDeathMessages=false
+
+[UTGame.UTTeamDeathMessage]
+bNoConsoleDeathMessages=true
+
+[UTGame.UTAnnouncer]
+AnnouncerLevel=2
+
+[UTGame.UTMusicManager]
+MusicVolume=0.36
+StingerVolumeMultiplier=1.1
+
+[UTGame.UTGame]
+BotRatio=+1.0
+GoalScore=25
+bTournament=false
+bPlayersMustBeReady=false
+NetWait=15
+ClientProcessingTimeout=30
+RestartWait=30
+MinNetPlayers=1
+bWaitForNetPlayers=true
+LateEntryLives=1
+TimeLimit=20
+GameDifficulty=+5.0
+EndTimeDelay=4.0
+GameSpecificMapCycles=(GameClassName="UTDeathmatch",Maps=("DM-Sanctuary","DM-Deck","DM-Gateway"))
+GameSpecificMapCycles=(GameClassName="UTTeamGame",Maps=("DM-Sanctuary","DM-Deck","DM-Gateway"))
+GameSpecificMapCycles=(GameClassName="UTVehicleCTFGame_Content",Maps=("VCTF-Necropolis","VCTF-SandStorm"))
+bLogGameplayEvents=false
+
+[UTGame.UTTeamGame]
+GoalScore=60
+bPlayersBalanceTeams=true
+bWeaponStay=true
+MaxLives=0
+
+[UTGame.UTCTFGame]
+GoalScore=3
+bWeaponStay=true
+
+[UTGame.UTHUDBase]
+ConsoleIconFontClassName=UI_Fonts.Fonts.UI_Fonts_Xbox18
+
+[UTGame.UTHUD]
+ConsoleMessageCount=16
+SafeRegionPct=1.0
+bShowMap=false
+MapDefaultSize=220
+bShowClock=false
+bShowDoll=true
+bShowAmmo=true
+bShowPowerups=true
+PowerupDims=(X=48,Y=52);
+bShowScoring=true
+bShowLeaderboard=true
+bShowVehicle=true
+bShowDamage=true
+bShowMap=true
+DamageIndicatorSize=384
+bShowMobileHud=true
+bShowVehicleArmorCount=True
+
+[UTGame.UTInventoryManager]
+bAutoSwitchWeaponOnPickup=true
+
+[UTGame.UTMutator_Arena]
+ArenaWeaponClassPath="UTGame.UTWeap_ShockRifle"
+
+[UTGame.UTUIScene_COptions]
+FirstCinematicMapName="UTCin-Intro"
+
+[UTGame.UTUIFrontEnd_LoginScreen]
+bSavePassword=True
+
+[UTGame.UTUIDataStore_StringList]
++StringData=(Tag="ServerType",DefaultValueIndex=1)
++StringData=(Tag="ServerType360",DefaultValueIndex=1)
++StringData=(Tag="MatchType",DefaultValueIndex=1)
++StringData=(Tag="MatchType360",DefaultValueIndex=1)
++StringData=(Tag="BotTeams",DefaultValueIndex=0)
++StringData=(Tag="RecordDemo",DefaultValueIndex=0)
++StringData=(Tag="PlayerName",DefaultValueIndex=0)
+
+[UTGame.UTUIDataStore_MenuItems]
++ElementProviderTypes=(ProviderTag="MultiplayerMenu",ProviderClassName="UTGame.UTUIDataProvider_MultiplayerMenuItem")
++ElementProviderTypes=(ProviderTag="GameModes",ProviderClassName="UTGame.UTUIDataProvider_GameModeInfo")
++ElementProviderTypes=(ProviderTag="Maps",ProviderClassName="UTGame.UTUIDataProvider_MapInfo")
++ElementProviderTypes=(ProviderTag="Mutators",ProviderClassName="UTGame.UTUIDataProvider_Mutator")
++ElementProviderTypes=(ProviderTag="Weapons",ProviderClassName="UTGame.UTUIDataProvider_Weapon")
++ElementProviderTypes=(ProviderTag="DropDownWeapons",ProviderClassName="UTGame.UTUIDataProvider_Weapon")
+
+;///////////////
+; Weapons
+;///////////////
+[UTWeap_RocketLauncher UTUIDataProvider_Weapon]
+ClassName=UTGameContent.UTWeap_RocketLauncher_Content
+AmmoClassPath=UTGame.UTAmmo_RocketLauncher
+
+[UTWeap_LinkGun UTUIDataProvider_Weapon]
+ClassName=UTGame.UTWeap_LinkGun
+AmmoClassPath=UTGame.UTAmmo_LinkGun
+
+[UTWeap_ShockRifle UTUIDataProvider_Weapon]
+ClassName=UTGameContent.UTWeap_ShockRifle
+AmmoClassPath=UTGame.UTAmmo_ShockRifle
+
+;///////////////
+; Possible Key Bindings
+;///////////////
+[MoveForward UTUIDataProvider_KeyBinding]
+Command="GBA_MoveForward"
+bIsCrucialBind=true
+
+[MoveBackward UTUIDataProvider_KeyBinding]
+Command="GBA_Backward"
+bIsCrucialBind=true
+
+[StrafeLeft UTUIDataProvider_KeyBinding]
+Command="GBA_StrafeLeft"
+bIsCrucialBind=true
+
+[StrafeRight UTUIDataProvider_KeyBinding]
+Command="GBA_StrafeRight"
+bIsCrucialBind=true
+
+[TurnLeft UTUIDataProvider_KeyBinding]
+Command="GBA_TurnLeft"
+
+[TurnRight UTUIDataProvider_KeyBinding]
+Command="GBA_TurnRight"
+
+[Jump UTUIDataProvider_KeyBinding]
+Command="GBA_Jump"
+bIsCrucialBind=true
+
+[Duck UTUIDataProvider_KeyBinding]
+Command="GBA_Duck"
+bRemoveOnPS3=1
+bRemoveOn360=1
+bIsCrucialBind=true
+
+[Fire UTUIDataProvider_KeyBinding]
+Command="GBA_Fire"
+bIsCrucialBind=true
+
+[AltFire UTUIDataProvider_KeyBinding]
+Command="GBA_AltFire"
+bIsCrucialBind=true
+
+[Use UTUIDataProvider_KeyBinding]
+Command="GBA_Use"
+bIsCrucialBind=true
+
+[FeignDeath UTUIDataProvider_KeyBinding]
+Command="GBA_FeignDeath"
+
+[SwitchToBestWeapon UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchToBestWeapon"
+
+[PreviousWeapon UTUIDataProvider_KeyBinding]
+Command="GBA_PrevWeapon"
+
+[NextWeapon UTUIDataProvider_KeyBinding]
+Command="GBA_NextWeapon"
+
+[SwitchWeapon1 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon1"
+
+[SwitchWeapon2 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon2"
+
+[SwitchWeapon3 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon3"
+
+[SwitchWeapon4 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon4"
+
+[SwitchWeapon5 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon5"
+
+[SwitchWeapon6 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon6"
+
+[SwitchWeapon7 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon7"
+
+[SwitchWeapon8 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon8"
+
+[SwitchWeapon9 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon9"
+
+[SwitchWeapon10 UTUIDataProvider_KeyBinding]
+Command="GBA_SwitchWeapon10"
+
+[ToggleTranslocator UTUIDataProvider_KeyBinding]
+Command="GBA_ToggleTranslocator"
+bIsCrucialBind=true
+
+[TransmitVoice UTUIDataProvider_KeyBinding]
+Command="GBA_ToggleSpeaking"
+
+[Talk UTUIDataProvider_KeyBinding]
+Command="GBA_Talk"
+bRemoveOnPS3=True
+bRemoveOn360=1
+
+[TeamTalk UTUIDataProvider_KeyBinding]
+Command="GBA_TeamTalk"
+bRemoveOnPS3=True
+bRemoveOn360=1
+
+[Taunt1 UTUIDataProvider_KeyBinding]
+Command="GBA_Taunt1"
+
+[Taunt2 UTUIDataProvider_KeyBinding]
+Command="GBA_Taunt2"
+
+[Horn UTUIDataProvider_KeyBinding]
+Command="GBA_Horn"
+
+[ShowMenu UTUIDataProvider_KeyBinding]
+Command="GBA_ShowMenu"
+bIsCrucialBind=true
+
+[ShowCommandMenu UTUIDataProvider_KeyBinding]
+Command="GBA_ShowCommandMenu"
+
+[ShowScores UTUIDataProvider_KeyBinding]
+Command="GBA_ShowScores"
+
+[ShowMap UTUIDataProvider_KeyBinding]
+Command="GBA_ShowMap"
+
+[ToggleMinimap UTUIDataProvider_KeyBinding]
+Command="GBA_ToggleMinimap"
+
+;[GrowHud UTUIDataProvider_KeyBinding]
+;Command="GBA_GrowHud"
+
+;[ShrinkHud UTUIDataProvider_KeyBinding]
+;Command="GBA_ShrinkHud"
+
+;///////////////
+; Multiplayer Menu
+;///////////////
+[JoinGame UTUIDataProvider_MultiplayerMenuItem]
+bRemoveOnPC=0
+bRemoveOn360=0
+bRemoveOnPS3=0
+
+[HostGame UTUIDataProvider_MultiplayerMenuItem]
+bRemoveOnPC=0
+bRemoveOn360=0
+bRemoveOnPS3=0
+
+;///////////////
+; UT3 Mutators
+;///////////////
+[UTMutator_SlowTimeKills UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_SlowTimeKills
+GroupNames=GAMESPEED
+bStandaloneOnly=1
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_BigHead UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_BigHead
+GroupNames=BIGHEAD
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_FriendlyFire UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_FriendlyFire
+GroupNames=FRIENDLYFIRE
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_Handicap UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_Handicap
+GroupNames=HANDICAP
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_LowGrav UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_LowGrav
+GroupNames=JUMPING
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_NoPowerups UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_NoPowerups
+GroupNames=POWERUPS
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_Slomo UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_Slomo
+GroupNames=GAMESPEED
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_SpeedFreak UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_SpeedFreak
+GroupNames=GAMESPEED
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_SuperBerserk UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_SuperBerserk
+GroupNames=FIRINGSPEED
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_WeaponsRespawn UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_WeaponsRespawn
+GroupNames=WEAPONRESPAWN
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_Survival UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_Survival
+GroupNames=
+UIConfigScene=
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+;///////////////
+; UT3 Game Modes
+;///////////////
+[UTDeathmatch UTUIDataProvider_GameModeInfo]
+GameMode=UTGame.UTDeathmatch
+GameSettingsClass=UTgameSettingsDM
+GameSearchClass=UTGameSearchDM
+PreviewImageMarkup=UI_FrontEnd_Art.GameTypes.___Deathmatch
+DefaultMap=DM-Deck
+Prefixes=DM
+OptionSet=DM
+IconImage=UI_HUD.HUD.UI_HUD_BaseD
+IconU=442
+IconV=76
+IconUL=129
+IconVL=104
+
+[UTTeamGame UTUIDataProvider_GameModeInfo]
+GameMode=UTGame.UTTeamGame
+GameSettingsClass=UTGameSettingsTDM
+GameSearchClass=UTGameSearchTDM
+PreviewImageMarkup=UI_FrontEnd_Art.GameTypes.___TeamDeathmatch
+DefaultMap=DM-Deck
+Prefixes=DM
+OptionSet=TDM
+IconImage=UI_HUD.HUD.UI_HUD_BaseD
+IconU=571
+IconV=76
+IconUL=149
+IconVL=105
+
+[UTVehicleCTFGame_Content UTUIDataProvider_GameModeInfo]
+GameMode=UTGameContent.UTVehicleCTFGame_Content
+GameSettingsClass=UTGameSettingsVCTF
+GameSearchClass=UTGameSearchVCTF
+PreviewImageMarkup=UI_FrontEnd_Art.GameTypes.___VCTF
+DefaultMap=VCTF-Necropolis
+Prefixes=VCTF
+OptionSet=VCTF
+IconImage=UI_HUD.HUD.UI_HUD_BaseD
+IconU=230
+IconV=76
+IconUL=104
+IconVL=113
+
+;///////////////
+; UT3 Maps
+;///////////////
+[vCTF-Necropolis UTUIDataProvider_MapInfo]
+MapName=vCTF-NECROPOLIS
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-vCTF-Necropolis
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc38>
+
+[vCTF-Sandstorm UTUIDataProvider_MapInfo]
+MapName=vCTF-SANDSTORM
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-vCTF-Sandstorm
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc35>
+
+[DM-Deck UTUIDataProvider_MapInfo]
+MapName=DM-DECK
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-DM-Deck
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc139>
+
+[DM-Sanctuary UTUIDataProvider_MapInfo]
+MapName=DM-SANCTUARY
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-DM-Sanctuary
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc36>
+
+[UTGame.UTUIDataStore_Options]
++ElementProviderTypes=(ProviderTag="OptionSets",ProviderClassName="UTGame.UTUIDataProvider_MenuOption")
+
+;///////////////
+; Instant Action Options
+;///////////////
+
+[BotSkill_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:BotSkill>
+bReadOnlyCombo=1
+
+[NumBots_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:NumBots>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0.0,MaxValue=15.0,bIntRange=1,NudgeValue=1.0,CurrentValue=4.0)
+
+[GoalScore_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:GoalScore>
+bEditableCombo=1
+bNumericCombo=1
+
+[TimeLimit_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:TimeLimit>
+bEditableCombo=1
+bNumericCombo=1
+
+[BotTeam_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTStringList:BotTeams>
+bRemoveOn360=1
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+; Disabled
+;[RecordDemo_Common UTUIDataProvider_MenuOption]
+;OptionSet=Common
+;DataStoreMarkup=<UTStringList:RecordDemo>
+;bRemoveOn360=1
+;OptionType=UTOT_CollectionCheckBox
+
+;///////////////
+; Deathmatch Options
+;///////////////
+
+[BotSkill_DM UTUIDataProvider_MenuOption]
++OptionSet=DM
++OptionSet=TDM
++OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:BotSkill>
+
+[NumBots_DM UTUIDataProvider_MenuOption]
++OptionSet=DM
++OptionSet=TDM
++OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:NumBots>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0.0,MaxValue=15.0,bIntRange=1,NudgeValue=1.0,CurrentValue=0.0)
+
+[VsBots_DM UTUIDataProvider_MenuOption]
++OptionSet=TDM
++OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:VsBots>
+bOnlineOnly=1
+
+[GoalScore_DM UTUIDataProvider_MenuOption]
++OptionSet=DM
++OptionSet=TDM
++OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:GoalScore>
+bEditableCombo=1
+bNumericCombo=1
+
+[TimeLimit_DM UTUIDataProvider_MenuOption]
++OptionSet=DM
++OptionSet=TDM
++OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:TimeLimit>
+bEditableCombo=1
+bNumericCombo=1
+
+[BotTeam_DM UTUIDataProvider_MenuOption]
++OptionSet=TDM
++OptionSet=VCTF
+DataStoreMarkup=<UTStringList:BotTeams>
+bRemoveOn360=1
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+[ForceRespawn_DM UTUIDataProvider_MenuOption]
++OptionSet=DM
++OptionSet=TDM
++OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:ForceRespawn>
+OptionType=UTOT_CollectionCheckBox
+
+
+;///////////////
+; Server Options
+;///////////////
+[ServerType UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<UTStringList:ServerType>
+bRemoveOn360=1
+
+[ServerType360 UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTStringList:ServerType360>
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+[MaxPlayers_PC UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MaxPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=2,MaxValue=24,bIntRange=1,NudgeValue=1,CurrentValue=24)
+bRemoveOn360=1
+bRemoveOnPS3=1
+
+[MaxPlayers_Console UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MaxPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=2,MaxValue=16,bIntRange=1,NudgeValue=1,CurrentValue=16)
+bRemoveOnPC=1
+
+[MinNumPlayers_PC UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MinNetPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0,MaxValue=24,bIntRange=1,NudgeValue=1,CurrentValue=24)
+bRemoveOn360=1
+bRemoveOnPS3=1
+
+[MinNumPlayers_Console UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MinNetPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0,MaxValue=16,bIntRange=1,NudgeValue=1,CurrentValue=16)
+bRemoveOnPC=1
+
+[PrivateSlots UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<UTGameSettings:NumPrivateConnections>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0,MaxValue=23,bIntRange=1,NudgeValue=1,CurrentValue=0)
+bRemoveOnPS3=1
+bRemoveOnPC=1
+
+[AllowKeyboard UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<UTGameSettings:AllowKeyboard>
+OptionType=UTOT_CollectionCheckBox
+bRemoveOnPC=true
+bRemoveOn360=true
+
+[ServerDescription UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<OnlinePlayerData:ServerDescription>
+OptionType=UTOT_EditBox
+EditBoxMaxLength=32
+bRemoveOn360=true
+bRemoveOnPS3=1
+
+[ServerMOTD UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<Registry:ServerMOTD>
+OptionType=UTOT_EditBox
+EditBoxMaxLength=512
+bRemoveOn360=true
+bRemoveOnPS3=1
+
+[ServerPassword UTUIDataProvider_MenuOption]
++OptionSet=Server
+DataStoreMarkup=<Registry:ServerPassword>
+OptionType=UTOT_EditBox
+EditBoxMaxLength=16
+bRemoveOn360=true
+bRemoveOnPS3=1
+
+;///////////////
+; Client Options
+;///////////////
+[MatchType UTUIDataProvider_MenuOption]
++OptionSet=Client
+DataStoreMarkup=<UTStringList:MatchType>
+bRemoveOn360=1
+
+[MatchType360 UTUIDataProvider_MenuOption]
++OptionSet=Client
+DataStoreMarkup=<UTStringList:MatchType360>
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+[GameMode_Client UTUIDataProvider_MenuOption]
++OptionSet=Client
+DataStoreMarkup=<UTMenuItems:GameModeFilter>
+
+;///////////////
+; PS3 Keybinding Presets
+;///////////////
+[StickConfiguration_PresetsPS3 UTUIDataProvider_MenuOption]
+OptionSet=PresetsPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_AnalogStickPreset>
+
+[ButtonPreset_PresetsPS3 UTUIDataProvider_MenuOption]
+OptionSet=PresetsPS3
+DataStoreMarkup=<UTStringList:PS3ButtonPresets>
+
+;///////////////
+; PS3 Keybinding
+;///////////////
+[StickConfiguration_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_AnalogStickPreset>
+
+[X_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonA>
+
+[Circle_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonB>
+
+[Square_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonX>
+
+[Triangle_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonY>
+
+[R1_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_RightBumper>
+
+[R2_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_RightTrigger>
+
+[R3_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_RightThumbstickPressed>
+
+[L1_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_LeftBumper>
+
+[L2_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_LeftTrigger>
+
+[L3_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_LeftThumbstickPressed>
+
+[DPadUp_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadUp>
+
+[DPadDown_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadDown>
+
+[DPadLeft_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadLeft>
+
+[DPadRight_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadRight>
+
+
+[UTGame.UTUIDataStore_StringAliasMap]
+FakePlatform=0
++MenuInputMapArray=(FieldName="None",MappedText="")
+
+; Terminology
++MenuInputMapArray=(FieldName="Term_Controller",Set="PC",MappedText="<Strings:UDKGameUI.Terms.Controller_PC>")
++MenuInputMapArray=(FieldName="Term_Controller",Set="PS3",MappedText="<Strings:UDKGameUI.Terms.Controller_PS3>")
++MenuInputMapArray=(FieldName="Term_Controller",Set="360",MappedText="<Strings:UDKGameUI.Terms.Controller_360>")
+
++MenuInputMapArray=(FieldName="Term_GamerCard",Set="PS3",MappedText="<Strings:UDKGameUI.Terms.GamerCard_PS3>")
++MenuInputMapArray=(FieldName="Term_GamerCard",Set="PC",MappedText="<Strings:UDKGameUI.Terms.GamerCard_PC>")
++MenuInputMapArray=(FieldName="Term_GamerCard",Set="360",MappedText="<Strings:UDKGameUI.Terms.GamerCard_360>")
+
+; Button Mappings
+
++MenuInputMapArray=(FieldName="CycleTabs",Set="PS3",MappedText="CYCLE TABS")
++MenuInputMapArray=(FieldName="CycleTabs",Set="360",MappedText="CYCLE TABS")
+
++MenuInputMapArray=(FieldName="AnyKey",Set="PC",MappedText="<Strings:UDKGameUI.Generic.Fire> ")
+
++MenuInputMapArray=(FieldName="Accept",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_A> ")
++MenuInputMapArray=(FieldName="Cancel",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_B> ")
++MenuInputMapArray=(FieldName="Conditional1",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_Y> ")
++MenuInputMapArray=(FieldName="Conditional2",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_X> ")
++MenuInputMapArray=(FieldName="Start",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_Start> ")
++MenuInputMapArray=(FieldName="ShiftUp",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftBumper> ")
++MenuInputMapArray=(FieldName="ShiftDown",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_RightBumper> ")
++MenuInputMapArray=(FieldName="ShiftUpTrigger",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftTrigger> ")
++MenuInputMapArray=(FieldName="ShiftDownTrigger",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_RightTrigger> ")
++MenuInputMapArray=(FieldName="ShiftBothTrigger",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftTrigger><Strings:UDKGameUI.ButtonFont.Xenon_RightTrigger> ")
++MenuInputMapArray=(FieldName="Defaults",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftTrigger> ")
++MenuInputMapArray=(FieldName="AnyKey",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_A> ")
+
++MenuInputMapArray=(FieldName="Accept",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_X> ")
++MenuInputMapArray=(FieldName="Cancel",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Circle> ")
++MenuInputMapArray=(FieldName="Conditional1",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Triangle> ")
++MenuInputMapArray=(FieldName="Conditional2",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Square> ")
++MenuInputMapArray=(FieldName="Start",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Start> ")
++MenuInputMapArray=(FieldName="Select",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Select> ")
++MenuInputMapArray=(FieldName="ShiftUp",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L1> ")
++MenuInputMapArray=(FieldName="ShiftDown",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_R1> ")
++MenuInputMapArray=(FieldName="ShiftUpTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2> ")
++MenuInputMapArray=(FieldName="ShiftDownTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_R2> ")
++MenuInputMapArray=(FieldName="ShiftBothTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2><Strings:UDKGameUI.ButtonFont.PS3_R2> ")
++MenuInputMapArray=(FieldName="LeftTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2> ")
++MenuInputMapArray=(FieldName="Defaults",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2> ")
++MenuInputMapArray=(FieldName="RightTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_R2> ")
++MenuInputMapArray=(FieldName="AnyKey",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_X> ")
+
+
+</textarea><br><br><h2>UDKGame.ini</h2><br><br>
+
+
+<textarea cols="110" rows="20"readonly="readonly">
+[Engine.GameInfo]
+DefaultGame=magneticthumbs.UDNGame
+DefaultServerGame=magneticthumbs.UDNGame
+bAdminCanPause=false
+MaxPlayers=32
+GameDifficulty=1.000000
+bChangeLevels=True
+MaxSpectators=2
+MaxIdleTime=0.000000
+MaxTimeMargin=0.000000
+TimeMarginSlack=1.350000
+MinTimeMargin=-1.000000
+TotalNetBandwidth=32000
+MaxDynamicBandwidth=7000
+MinDynamicBandwidth=4000
+PlayerControllerClassName=UDKBase.SimplePC
+DefaultGameType=UTGame.UTDeathmatch
+DefaultMapPrefixes=(Prefix="DM",bUsesCommonPackage=FALSE,GameType="UTGame.UTDeathmatch")
+DefaultMapPrefixes=(Prefix="CTF",bUsesCommonPackage=FALSE,GameType="UTGameContent.UTCTFGame_Content")
+DefaultMapPrefixes=(Prefix="VCTF",bUsesCommonPackage=FALSE,GameType="UTGameContent.UTVehicleCTFGame_Content")
+bKickLiveIdlers=False
+ArbitrationHandshakeTimeout=0.000000
+GoreLevel=0
+
+[Engine.AccessControl]
+IPPolicies=ACCEPT;*
+bAuthenticateClients=True
+bAuthenticateServer=True
+bAuthenticateListenHost=True
+MaxAuthRetryCount=3
+AuthRetryDelay=5
+
+[DefaultPlayer]
+Name=Player
+Team=255
+
+[Engine.HUD]
+bMessageBeep=true
+HudCanvasScale=0.95
+ConsoleMessageCount=4
+ConsoleFontSize=5
+MessageFontOffset=0
+bShowHUD=true
+bShowDirectorInfoDebug=false
+bShowDirectorInfoHUD=false
+DebugDisplay=AI
+
+[Engine.PlayerController]
+bAimingHelp=false
+InteractDistance=512
+bCheckRelevancyThroughPortals=true
+MaxConcurrentHearSounds=32
+bLogHearSoundOverflow=FALSE
+bShowKismetDrawText=True
+
+[Engine.Weapon]
+Priority=-1.0
+
+[Engine.WorldInfo]
+DefaultGravityZ=-520.0
+RBPhysicsGravityScaling=2.0
+MaxPhysicsSubsteps=5
+SquintModeKernelSize=128.0
+EmitterPoolClassPath=UDKBase.UDKEmitterPool
+DecalManagerClassPath=UTGame.UTDecalManager
+FractureManagerClassPath=Engine.FractureManager
+FracturedMeshWeaponDamage=5.0
+ChanceOfPhysicsChunkOverride=1.0
+bEnableChanceOfPhysicsChunkOverride=FALSE
+FractureExplosionVelScale=1.0
+DefaultAmbientZoneSettings=(bIsWorldInfo=true)
+bPersistPostProcessToNextLevel=TRUE
+bAllowHostMigration=FALSE
+HostMigrationTimeout=15
+bAllowTemporalAA=True
+bNoMobileMapWarnings=False
+DefaultPostProcessSettings=(Bloom_Scale=0.2,DOF_BlurKernelSize=12.0,DOF_MaxNearBlurAmount=0.0,DOF_MaxNearBlurAmount=0.0,DOF_FocusInnerRadius=2000.0,DOF_FocusDistance=0.0,)
+
+[Engine.AutoTestManager]
+NumMinutesPerMap=50
+#CommandsToRunAtEachTravelTheWorldNode=MemLeakCheck
+#CommandsToRunAtEachTravelTheWorldNode=SNAPSHOTMEMORY
+NumAutomatedMapTestingCycles=0
+AutomatedMapTestingList=CTF-Hydrosis
+AutomatedMapTestingList=DM-Defiance
+AutomatedMapTestingList=VCTF-Kargo
+AutomatedMapTestingList=WAR-Avalanche
+AutomatedMapTestingList=WAR-Torlan
+
+[Engine.DecalManager]
+DecalLifeSpan=30.0
+
+[Engine.UIDataStore_GameResource]
+ElementProviderTypes=(ProviderTag="GameTypes",ProviderClassName="Engine.UIGameInfoSummary")
+
+[GameFramework.GameCheatManager]
+DebugCameraControllerClassName=GameFramework.DebugCameraController
+
+[GameFramework.MobileHud]
+bShowMobileHud=true
+bShowGameHud=true
+bForceMobileHUD=false
+
+[GameFramework.MobileInputZone]
+RenderColor=(R=255,G=255,B=255,A=255)
+InactiveAlpha=0.5
+SizeX=100
+SizeY=100
+VertMultiplier=1.0
+HorizMultiplier=1.0
+bUseGentleTransitions=true
+ResetCenterAfterInactivityTime=3.0
+ActivateTime=0.6
+DeactivateTime=0.2
+TapDistanceConstraint=5
+bApplyGlobalScaleToActiveSizes=true
+AuthoredGlobalScale=2.0
+
+[GameFramework.FrameworkGame]
+RequiredMobileInputConfigs=(GroupName="DebugGroup",RequireZoneNames=("DebugStickMoveZone","DebugStickLookZone","DebugLookZone"))
+
+[DebugLookZone MobileInputZone]
+InputKey=MouseY
+HorizontalInputKey=MouseX
+TapInputKey=MOBILE_Fire
+Type=ZoneType_Trackball
+bRelativeSizeX=true
+bRelativeSizeY=true
+X=0
+Y=0
+SizeX=1.0
+SizeY=1.0
+VertMultiplier=-0.0007
+HorizMultiplier=0.001
+Acceleration=12.0
+Smoothing=1.0
+EscapeVelocityStrength=0.85
+bIsInvisible=1
+TapDistanceConstraint=32
+
+[DebugStickMoveZone MobileInputZone]
+InputKey=MOBILE_AForward
+HorizontalInputKey=MOBILE_AStrafe
+Type=ZoneType_Joystick
+bRelativeX=true
+bRelativeY=true
+bRelativeSizeX=true
+bRelativeSizeY=true
+X=0.05
+Y=-0.4
+SizeX=0.1965
+SizeY=1.0
+bSizeYFromSizeX=true
+VertMultiplier=-1.0
+HorizMultiplier=1.0
+bScalePawnMovement=true
+RenderColor=(R=255,G=255,B=255,A=255)
+InactiveAlpha=0.25
+bUseGentleTransitions=true
+ResetCenterAfterInactivityTime=3.0
+ActivateTime=0.6
+DeactivateTime=0.2
+TapDistanceConstraint=5
+
+[DebugStickLookZone MobileInputZone]
+InputKey=MOBILE_ALookUp
+HorizontalInputKey=MOBILE_ATurn
+Type=ZoneType_Joystick
+bRelativeX=true
+bRelativeY=true
+bRelativeSizeX=true
+bRelativeSizeY=true
+VertMultiplier=-0.5
+HorizMultiplier=0.35
+X=-0.2465
+Y=-0.4
+SizeX=0.1965
+SizeY=1.0
+bSizeYFromSizeX=true
+RenderColor=(R=255,G=255,B=255,A=255)
+InactiveAlpha=0.25
+bUseGentleTransitions=true
+ResetCenterAfterInactivityTime=3.0
+ActivateTime=0.6
+DeactivateTime=0.2
+TapDistanceConstraint=5
+
+[Configuration]
+
+[Engine.GameReplicationInfo]
+ServerName=UDK Server
+MessageOfTheDay=Welcome to a UDK Server!
+
+[Engine.EmitterPool]
+bLogPoolOverflow=true
+
+[UTGame.UTGib]
+bUseUnrealPhysics=true
+
+[UDKBase.UDKUIDataStore_StringAliasBindingMap]
+FakePlatform=1
+MenuInputMapArray=(FieldName="None",MappedText="")
+MenuInputMapArray=(FieldName="GBA_MoveForward")
+MenuInputMapArray=(FieldName="GBA_Backward")
+MenuInputMapArray=(FieldName="GBA_StrafeLeft")
+MenuInputMapArray=(FieldName="GBA_StrafeRight")
+MenuInputMapArray=(FieldName="GBA_TurnLeft")
+MenuInputMapArray=(FieldName="GBA_TurnRight")
+MenuInputMapArray=(FieldName="GBA_Jump")
+MenuInputMapArray=(FieldName="GBA_Duck")
+MenuInputMapArray=(FieldName="GBA_Fire")
+MenuInputMapArray=(FieldName="GBA_AltFire")
+MenuInputMapArray=(FieldName="GBA_Use")
+MenuInputMapArray=(FieldName="GBA_FeignDeath")
+MenuInputMapArray=(FieldName="GBA_SwitchToBestWeapon")
+MenuInputMapArray=(FieldName="GBA_PrevWeapon")
+MenuInputMapArray=(FieldName="GBA_NextWeapon")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon1")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon2")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon3")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon4")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon5")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon6")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon7")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon8")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon9")
+MenuInputMapArray=(FieldName="GBA_SwitchWeapon10")
+MenuInputMapArray=(FieldName="GBA_ToggleTranslocator")
+MenuInputMapArray=(FieldName="GBA_ToggleSpeaking")
+MenuInputMapArray=(FieldName="GBA_Talk")
+MenuInputMapArray=(FieldName="GBA_TeamTalk")
+MenuInputMapArray=(FieldName="GBA_Taunt1")
+MenuInputMapArray=(FieldName="GBA_Taunt2")
+MenuInputMapArray=(FieldName="GBA_Horn")
+MenuInputMapArray=(FieldName="GBA_ShowMenu")
+MenuInputMapArray=(FieldName="GBA_ShowCommandMenu")
+MenuInputMapArray=(FieldName="GBA_ShowScores")
+MenuInputMapArray=(FieldName="GBA_ShowMap")
+MenuInputMapArray=(FieldName="GBA_ToggleMinimap")
+MenuInputMapArray=(FieldName="GBA_GrowHud")
+MenuInputMapArray=(FieldName="GBA_ShrinkHud")
+MenuInputMapArray=(FieldName="GBA_ToggleMelee")
+MenuInputMapArray=(FieldName="GBA_WeaponPicker")
+MenuInputMapArray=(FieldName="GBA_Jump_Gamepad")
+MenuInputMapArray=(FieldName="GBA_MoveForward_Gamepad")
+MenuInputMapArray=(FieldName="GBA_TurnLeft_Gamepad")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_A",XBoxMapping="Xenon_A",PS3Mapping="PS3_X")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_B",XBoxMapping="Xenon_B",PS3Mapping="PS3_Circle")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_X",XBoxMapping="Xenon_X",PS3Mapping="PS3_Square")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_Y",XBoxMapping="Xenon_Y",PS3Mapping="PS3_Triangle")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_Start",XBoxMapping="Xenon_Start",PS3Mapping="PS3_Start")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_Back",XBoxMapping="Xenon_Back",PS3Mapping="PS3_Select")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_LeftShoulder",XBoxMapping="Xenon_LeftBumper",PS3Mapping="PS3_L1")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_RightShoulder",XBoxMapping="Xenon_RightBumper",PS3Mapping="PS3_R1")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_LeftTrigger",XBoxMapping="Xenon_LeftTrigger",PS3Mapping="PS3_L2")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_RightTrigger",XBoxMapping="Xenon_RightTrigger",PS3Mapping="PS3_R2")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_DPad_Up",XBoxMapping="Xenon_DPadUp",PS3Mapping="PS3_DPadUp")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_DPad_Down",XBoxMapping="Xenon_DPadDown",PS3Mapping="PS3_DPadDown")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_DPad_Left",XBoxMapping="Xenon_DPadLeft",PS3Mapping="PS3_DPadLeft")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_DPad_Right",XBoxMapping="Xenon_DPadRight",PS3Mapping="PS3_DPadRight")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_LeftThumbstick",XBoxMapping="Xenon_LeftStickButton",PS3Mapping="PS3_LeftStickButton")
+ControllerMapArray=(KeyName="GMS_XBoxTypeS_RightThumbstick",XBoxMapping="Xenon_RightStickButton",PS3Mapping="PS3_RightStickButton")
+ControllerMapArray=(KeyName="GMS_XboxTypeS_LeftX",XBoxMapping="Xenon_LeftStick",PS3Mapping="PS3_LeftStick")
+ControllerMapArray=(KeyName="GMS_XboxTypeS_LeftY",XBoxMapping="Xenon_LeftStick",PS3Mapping="PS3_LeftStick")
+ControllerMapArray=(KeyName="GMS_XboxTypeS_RightX",XBoxMapping="Xenon_RightStick",PS3Mapping="PS3_RightStick")
+ControllerMapArray=(KeyName="GMS_XboxTypeS_RightY",XBoxMapping="Xenon_RightStick",PS3Mapping="PS3_RightStick")
+
+[GameFramework.MobilePlayerInput]
+MobileDoubleTapTime=0.33
+MobileTapRepeatTime=0.1
+MobileMinHoldForTap=0.5
+ZoneTimeout=2.0
+bFakeMobileTouches=False
+
+[UDKBase.SimpleGame]
+RequiredMobileInputConfigs=(GroupName="UberGroup",RequireZoneNames=("UberStickMoveZone","UberStickLookZone","UberLookZone"))
+RequiredMobileInputConfigs=(GroupName="InitialFlybyGroup")
+
+[UDKBase.CastleGame]
+RequiredMobileInputConfigs=(GroupName="UberGroup",RequireZoneNames=("MenuSlider","UberStickMoveZone","UberStickLookZone","UberLookZone"))
+RequiredMobileInputConfigs=(bIsAttractModeGroup=true,GroupName="AttractGroup",RequireZoneNames=("MenuSlider","ExitAttractModeZone"))
+RequiredMobileInputConfigs=(GroupName="InitialFlybyGroup")
+RequiredMobileInputConfigs=(GroupName="TapTutorialGroup",RequireZoneNames=("MenuSlider","TapTutorialZone"))
+RequiredMobileInputConfigs=(GroupName="SwipeTutorialGroup",RequireZoneNames=("MenuSlider","SwipeTutorialZone"))
+bAllowAttractMode=true
+
+[UDKBase.SimplePawn]
+CastlePawnSpeed=440
+CastlePawnAccel=2048
+
+[UDKBase.SimplePC]
+ServerCommandline=EpicCitadel?listen
+RotationSmoothingFactor=5.0
+bSmoothRotation=false
+bSuppressSplash=false
+DefaultInputGroup=1
+
+[MenuSlider MobileInputZone]
+Type=ZoneType_Slider
+X=0.5
+bRelativeX=true
+bCenterX=true
+Y=0
+bRelativeSizeX=true
+bRelativeSizeY=true
+SizeX=0.165625
+SizeY=1.0
+ActiveSizeX=0.165625
+ActiveSizeY=0.4
+bActiveSizeYFromX=true
+SlideType=ZoneSlide_UpDown
+RenderColor=(R=255,G=255,B=255,A=255)
+InactiveAlpha=1.0
+bUseGentleTransitions=true
+ActivateTime=0.0
+DeactivateTime=0.33
+TapDistanceConstraint=32
+
+[ExitAttractModeZone MobileInputZone]
+Type=ZoneType_Button
+bRelativeX=true
+bRelativeY=true
+X=0
+Y=0
+bRelativeSizeX=true
+bRelativeSizeY=true
+SizeX=1.0
+SizeY=1.0
+bIsInvisible=true
+TapDistanceConstraint=32
+
+[DebugZone MobileInputZone]
+InputKey=MOBILE_ShowDebugMenu
+Type=ZoneType_Button
+bRelativeX=true
+bRelativeY=true
+X=-0.062
+Y=-0.5
+bRelativeSizeX=true
+bRelativeSizeY=true
+SizeX=0.0625
+SizeY=0.0938
+Caption=*
+RenderColor=(R=0,G=128,B=255,A=255)
+InactiveAlpha=0.8
+
+[UberLookZone UDKMobileInputZone]
+InputKey=MouseY
+HorizontalInputKey=MouseX
+TapInputKey=MOBILE_Fire
+Type=ZoneType_Trackball
+bRelativeSizeX=true
+bRelativeSizeY=true
+X=0
+Y=0
+SizeX=1.0
+SizeY=1.0
+VertMultiplier=-0.0007
+HorizMultiplier=0.001
+Acceleration=12.0
+Smoothing=1.0
+EscapeVelocityStrength=0.85
+bIsInvisible=1
+TapDistanceConstraint=32
+
+[TapTutorialZone MobileInputZone]
+InputKey=
+HorizontalInputKey=
+Type=ZoneType_Trackball
+bRelativeSizeX=true
+bRelativeSizeY=true
+X=0
+Y=0
+SizeX=1.0
+SizeY=1.0
+bIsInvisible=1
+TapDistanceConstraint=32
+
+[SwipeTutorialZone MobileInputZone]
+InputKey=MouseY
+HorizontalInputKey=MouseX
+Type=ZoneType_Trackball
+bRelativeSizeX=true
+bRelativeSizeY=true
+X=0
+Y=0
+SizeX=1.0
+SizeY=1.0
+VertMultiplier=-0.0007
+HorizMultiplier=0.001
+Acceleration=12.0
+Smoothing=1.0
+EscapeVelocityStrength=0.85
+bIsInvisible=1
+TapDistanceConstraint=32
+
+[UberStickMoveZone MobileInputZone]
+InputKey=MOBILE_AForward
+HorizontalInputKey=MOBILE_AStrafe
+Type=ZoneType_Joystick
+bRelativeX=true
+bRelativeY=true
+bRelativeSizeX=true
+bRelativeSizeY=true
+X=0.05
+Y=-0.4
+SizeX=0.1965
+SizeY=1.0
+bSizeYFromSizeX=true
+VertMultiplier=-1.0
+HorizMultiplier=1.0
+bScalePawnMovement=true
+RenderColor=(R=255,G=255,B=255,A=255)
+InactiveAlpha=0.25
+bUseGentleTransitions=true
+ResetCenterAfterInactivityTime=3.0
+ActivateTime=0.6
+DeactivateTime=0.2
+TapDistanceConstraint=5
+
+[UberStickLookZone MobileInputZone]
+InputKey=MOBILE_ALookUp
+HorizontalInputKey=MOBILE_ATurn
+Type=ZoneType_Joystick
+bRelativeX=true
+bRelativeY=true
+bRelativeSizeX=true
+bRelativeSizeY=true
+VertMultiplier=-0.5
+HorizMultiplier=0.35
+X=-0.2465
+Y=-0.4
+SizeX=0.1965
+SizeY=1.0
+bSizeYFromSizeX=true
+RenderColor=(R=255,G=255,B=255,A=255)
+InactiveAlpha=0.25
+bUseGentleTransitions=true
+ResetCenterAfterInactivityTime=3.0
+ActivateTime=0.6
+DeactivateTime=0.2
+TapDistanceConstraint=5
+
+[UTGame.UTPawn]
+Bob=0.010
+bWeaponBob=true
+
+[magneticthumbs.UDNPlayerController]
+bAutoTaunt=false
+bLandingShake=true
+PawnShadowMode=SHADOW_All
+AutoObjectivePreference=AOP_NoPreference
+bUseVehicleRotationOnPossess=true
+bFirstPersonWeaponsSelfShadow=true
+DefaultControlModuleClass=magneticthumbs.UDNControlModule_SideScrolling
+
+[UTGame.UTConsolePlayerController]
+bTargetAdhesionEnabled=TRUE
+bDebugTargetAdhesion=FALSE
+
+[UTGame.DemoRecSpectator]
+bLockRotationToViewTarget=false
+bAutoSwitchPlayers=false
+AutoSwitchPlayerInterval=0
+
+[UTGame.UTDeathMessage]
+bNoConsoleDeathMessages=false
+
+[UTGame.UTTeamDeathMessage]
+bNoConsoleDeathMessages=true
+
+[UTGame.UTAnnouncer]
+AnnouncerLevel=2
+
+[UTGame.UTMusicManager]
+MusicVolume=0.36
+StingerVolumeMultiplier=1.1
+
+[UTGame.UTGame]
+BotRatio=1.000000
+GoalScore=25
+bTournament=false
+bPlayersMustBeReady=false
+NetWait=15
+ClientProcessingTimeout=30
+RestartWait=30
+MinNetPlayers=1
+bWaitForNetPlayers=true
+LateEntryLives=1
+TimeLimit=20
+GameDifficulty=+5.0
+EndTimeDelay=4.000000
+GameSpecificMapCycles=(GameClassName="UTVehicleCTFGame_Content",Maps=("VCTF-Necropolis","VCTF-SandStorm"))
+bLogGameplayEvents=false
+bForceRespawn=False
+ServerSkillLevel=0
+MapCycleIndex=-1
+
+[UTGame.UTTeamGame]
+GoalScore=60
+bPlayersBalanceTeams=true
+bWeaponStay=true
+MaxLives=0
+
+[UTGame.UTCTFGame]
+GoalScore=3
+bWeaponStay=true
+
+[UTGame.UTHUDBase]
+ConsoleIconFontClassName=UI_Fonts.Fonts.UI_Fonts_Xbox18
+
+[UTGame.UTHUD]
+ConsoleMessageCount=16
+SafeRegionPct=1.0
+bShowMap=true
+MapDefaultSize=220
+bShowClock=false
+bShowDoll=true
+bShowAmmo=true
+bShowPowerups=true
+PowerupDims=(X=48,Y=52);
+bShowScoring=true
+bShowLeaderboard=true
+bShowVehicle=true
+bShowDamage=true
+DamageIndicatorSize=384
+bShowMobileHud=true
+bShowVehicleArmorCount=True
+
+[UTGame.UTInventoryManager]
+bAutoSwitchWeaponOnPickup=true
+
+[UTGame.UTMutator_Arena]
+ArenaWeaponClassPath=UTGame.UTWeap_ShockRifle
+
+[UTGame.UTUIScene_COptions]
+FirstCinematicMapName=UTCin-Intro
+
+[UTGame.UTUIFrontEnd_LoginScreen]
+bSavePassword=True
+
+[UTGame.UTUIDataStore_StringList]
+StringData=(Tag="ServerType",DefaultValueIndex=1)
+StringData=(Tag="ServerType360",DefaultValueIndex=1)
+StringData=(Tag="MatchType",DefaultValueIndex=1)
+StringData=(Tag="MatchType360",DefaultValueIndex=1)
+StringData=(Tag="BotTeams",DefaultValueIndex=0)
+StringData=(Tag="RecordDemo",DefaultValueIndex=0)
+StringData=(Tag="PlayerName",DefaultValueIndex=0)
+
+[UTGame.UTUIDataStore_MenuItems]
+ElementProviderTypes=(ProviderTag="MultiplayerMenu",ProviderClassName="UTGame.UTUIDataProvider_MultiplayerMenuItem")
+ElementProviderTypes=(ProviderTag="GameModes",ProviderClassName="UTGame.UTUIDataProvider_GameModeInfo")
+ElementProviderTypes=(ProviderTag="Maps",ProviderClassName="UTGame.UTUIDataProvider_MapInfo")
+ElementProviderTypes=(ProviderTag="Mutators",ProviderClassName="UTGame.UTUIDataProvider_Mutator")
+ElementProviderTypes=(ProviderTag="Weapons",ProviderClassName="UTGame.UTUIDataProvider_Weapon")
+ElementProviderTypes=(ProviderTag="DropDownWeapons",ProviderClassName="UTGame.UTUIDataProvider_Weapon")
+
+[UTWeap_RocketLauncher UTUIDataProvider_Weapon]
+ClassName=UTGameContent.UTWeap_RocketLauncher_Content
+AmmoClassPath=UTGame.UTAmmo_RocketLauncher
+
+[UTWeap_LinkGun UTUIDataProvider_Weapon]
+ClassName=UTGame.UTWeap_LinkGun
+AmmoClassPath=UTGame.UTAmmo_LinkGun
+
+[UTWeap_ShockRifle UTUIDataProvider_Weapon]
+ClassName=UTGameContent.UTWeap_ShockRifle
+AmmoClassPath=UTGame.UTAmmo_ShockRifle
+
+[MoveForward UTUIDataProvider_KeyBinding]
+Command=GBA_MoveForward
+bIsCrucialBind=true
+
+[MoveBackward UTUIDataProvider_KeyBinding]
+Command=GBA_Backward
+bIsCrucialBind=true
+
+[StrafeLeft UTUIDataProvider_KeyBinding]
+Command=GBA_StrafeLeft
+bIsCrucialBind=true
+
+[StrafeRight UTUIDataProvider_KeyBinding]
+Command=GBA_StrafeRight
+bIsCrucialBind=true
+
+[TurnLeft UTUIDataProvider_KeyBinding]
+Command=GBA_TurnLeft
+
+[TurnRight UTUIDataProvider_KeyBinding]
+Command=GBA_TurnRight
+
+[Jump UTUIDataProvider_KeyBinding]
+Command=GBA_Jump
+bIsCrucialBind=true
+
+[Duck UTUIDataProvider_KeyBinding]
+Command=GBA_Duck
+bRemoveOnPS3=1
+bRemoveOn360=1
+bIsCrucialBind=true
+
+[Fire UTUIDataProvider_KeyBinding]
+Command=GBA_Fire
+bIsCrucialBind=true
+
+[AltFire UTUIDataProvider_KeyBinding]
+Command=GBA_AltFire
+bIsCrucialBind=true
+
+[Use UTUIDataProvider_KeyBinding]
+Command=GBA_Use
+bIsCrucialBind=true
+
+[FeignDeath UTUIDataProvider_KeyBinding]
+Command=GBA_FeignDeath
+
+[SwitchToBestWeapon UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchToBestWeapon
+
+[PreviousWeapon UTUIDataProvider_KeyBinding]
+Command=GBA_PrevWeapon
+
+[NextWeapon UTUIDataProvider_KeyBinding]
+Command=GBA_NextWeapon
+
+[SwitchWeapon1 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon1
+
+[SwitchWeapon2 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon2
+
+[SwitchWeapon3 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon3
+
+[SwitchWeapon4 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon4
+
+[SwitchWeapon5 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon5
+
+[SwitchWeapon6 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon6
+
+[SwitchWeapon7 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon7
+
+[SwitchWeapon8 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon8
+
+[SwitchWeapon9 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon9
+
+[SwitchWeapon10 UTUIDataProvider_KeyBinding]
+Command=GBA_SwitchWeapon10
+
+[ToggleTranslocator UTUIDataProvider_KeyBinding]
+Command=GBA_ToggleTranslocator
+bIsCrucialBind=true
+
+[TransmitVoice UTUIDataProvider_KeyBinding]
+Command=GBA_ToggleSpeaking
+
+[Talk UTUIDataProvider_KeyBinding]
+Command=GBA_Talk
+bRemoveOnPS3=True
+bRemoveOn360=1
+
+[TeamTalk UTUIDataProvider_KeyBinding]
+Command=GBA_TeamTalk
+bRemoveOnPS3=True
+bRemoveOn360=1
+
+[Taunt1 UTUIDataProvider_KeyBinding]
+Command=GBA_Taunt1
+
+[Taunt2 UTUIDataProvider_KeyBinding]
+Command=GBA_Taunt2
+
+[Horn UTUIDataProvider_KeyBinding]
+Command=GBA_Horn
+
+[ShowMenu UTUIDataProvider_KeyBinding]
+Command=GBA_ShowMenu
+bIsCrucialBind=true
+
+[ShowCommandMenu UTUIDataProvider_KeyBinding]
+Command=GBA_ShowCommandMenu
+
+[ShowScores UTUIDataProvider_KeyBinding]
+Command=GBA_ShowScores
+
+[ShowMap UTUIDataProvider_KeyBinding]
+Command=GBA_ShowMap
+
+[ToggleMinimap UTUIDataProvider_KeyBinding]
+Command=GBA_ToggleMinimap
+
+[JoinGame UTUIDataProvider_MultiplayerMenuItem]
+bRemoveOnPC=0
+bRemoveOn360=0
+bRemoveOnPS3=0
+
+[HostGame UTUIDataProvider_MultiplayerMenuItem]
+bRemoveOnPC=0
+bRemoveOn360=0
+bRemoveOnPS3=0
+
+[UTMutator_SlowTimeKills UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_SlowTimeKills
+GroupNames=GAMESPEED
+bStandaloneOnly=1
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_BigHead UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_BigHead
+GroupNames=BIGHEAD
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_FriendlyFire UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_FriendlyFire
+GroupNames=FRIENDLYFIRE
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_Handicap UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_Handicap
+GroupNames=HANDICAP
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_LowGrav UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_LowGrav
+GroupNames=JUMPING
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_NoPowerups UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_NoPowerups
+GroupNames=POWERUPS
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_Slomo UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_Slomo
+GroupNames=GAMESPEED
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_SpeedFreak UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_SpeedFreak
+GroupNames=GAMESPEED
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_SuperBerserk UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_SuperBerserk
+GroupNames=FIRINGSPEED
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_WeaponsRespawn UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_WeaponsRespawn
+GroupNames=WEAPONRESPAWN
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTMutator_Survival UTUIDataProvider_Mutator]
+ClassName=UTGame.UTMutator_Survival
+GroupNames=
+UIConfigScene=
+bRemoveOn360=False
+bRemoveOnPC=False
+bRemoveOnPS3=False
+
+[UTDeathmatch UTUIDataProvider_GameModeInfo]
+GameMode=UTGame.UTDeathmatch
+GameSettingsClass=UTgameSettingsDM
+GameSearchClass=UTGameSearchDM
+PreviewImageMarkup=UI_FrontEnd_Art.GameTypes.___Deathmatch
+DefaultMap=DM-Deck
+Prefixes=DM
+OptionSet=DM
+IconImage=UI_HUD.HUD.UI_HUD_BaseD
+IconU=442
+IconV=76
+IconUL=129
+IconVL=104
+
+[UTTeamGame UTUIDataProvider_GameModeInfo]
+GameMode=UTGame.UTTeamGame
+GameSettingsClass=UTGameSettingsTDM
+GameSearchClass=UTGameSearchTDM
+PreviewImageMarkup=UI_FrontEnd_Art.GameTypes.___TeamDeathmatch
+DefaultMap=DM-Deck
+Prefixes=DM
+OptionSet=TDM
+IconImage=UI_HUD.HUD.UI_HUD_BaseD
+IconU=571
+IconV=76
+IconUL=149
+IconVL=105
+
+[UTVehicleCTFGame_Content UTUIDataProvider_GameModeInfo]
+GameMode=UTGameContent.UTVehicleCTFGame_Content
+GameSettingsClass=UTGameSettingsVCTF
+GameSearchClass=UTGameSearchVCTF
+PreviewImageMarkup=UI_FrontEnd_Art.GameTypes.___VCTF
+DefaultMap=VCTF-Necropolis
+Prefixes=VCTF
+OptionSet=VCTF
+IconImage=UI_HUD.HUD.UI_HUD_BaseD
+IconU=230
+IconV=76
+IconUL=104
+IconVL=113
+
+[vCTF-Necropolis UTUIDataProvider_MapInfo]
+MapName=vCTF-NECROPOLIS
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-vCTF-Necropolis
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc38>
+
+[vCTF-Sandstorm UTUIDataProvider_MapInfo]
+MapName=vCTF-SANDSTORM
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-vCTF-Sandstorm
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc35>
+
+[DM-Deck UTUIDataProvider_MapInfo]
+MapName=DM-DECK
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-DM-Deck
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc139>
+
+[DM-Sanctuary UTUIDataProvider_MapInfo]
+MapName=DM-SANCTUARY
+PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-DM-Sanctuary
+Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc36>
+
+[UTGame.UTUIDataStore_Options]
+ElementProviderTypes=(ProviderTag="OptionSets",ProviderClassName="UTGame.UTUIDataProvider_MenuOption")
+
+[BotSkill_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:BotSkill>
+bReadOnlyCombo=1
+
+[NumBots_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:NumBots>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0.0,MaxValue=15.0,bIntRange=1,NudgeValue=1.0,CurrentValue=4.0)
+
+[GoalScore_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:GoalScore>
+bEditableCombo=1
+bNumericCombo=1
+
+[TimeLimit_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTGameSettings:TimeLimit>
+bEditableCombo=1
+bNumericCombo=1
+
+[BotTeam_Common UTUIDataProvider_MenuOption]
+OptionSet=Common
+DataStoreMarkup=<UTStringList:BotTeams>
+bRemoveOn360=1
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+[BotSkill_DM UTUIDataProvider_MenuOption]
+OptionSet=DM
+OptionSet=TDM
+OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:BotSkill>
+
+[NumBots_DM UTUIDataProvider_MenuOption]
+OptionSet=DM
+OptionSet=TDM
+OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:NumBots>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0.0,MaxValue=15.0,bIntRange=1,NudgeValue=1.0,CurrentValue=0.0)
+
+[VsBots_DM UTUIDataProvider_MenuOption]
+OptionSet=TDM
+OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:VsBots>
+bOnlineOnly=1
+
+[GoalScore_DM UTUIDataProvider_MenuOption]
+OptionSet=DM
+OptionSet=TDM
+OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:GoalScore>
+bEditableCombo=1
+bNumericCombo=1
+
+[TimeLimit_DM UTUIDataProvider_MenuOption]
+OptionSet=DM
+OptionSet=TDM
+OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:TimeLimit>
+bEditableCombo=1
+bNumericCombo=1
+
+[BotTeam_DM UTUIDataProvider_MenuOption]
+OptionSet=TDM
+OptionSet=VCTF
+DataStoreMarkup=<UTStringList:BotTeams>
+bRemoveOn360=1
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+[ForceRespawn_DM UTUIDataProvider_MenuOption]
+OptionSet=DM
+OptionSet=TDM
+OptionSet=VCTF
+DataStoreMarkup=<UTGameSettings:ForceRespawn>
+OptionType=UTOT_CollectionCheckBox
+
+[ServerType UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTStringList:ServerType>
+bRemoveOn360=1
+
+[ServerType360 UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTStringList:ServerType360>
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+[MaxPlayers_PC UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MaxPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=2,MaxValue=24,bIntRange=1,NudgeValue=1,CurrentValue=24)
+bRemoveOn360=1
+bRemoveOnPS3=1
+
+[MaxPlayers_Console UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MaxPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=2,MaxValue=16,bIntRange=1,NudgeValue=1,CurrentValue=16)
+bRemoveOnPC=1
+
+[MinNumPlayers_PC UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MinNetPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0,MaxValue=24,bIntRange=1,NudgeValue=1,CurrentValue=24)
+bRemoveOn360=1
+bRemoveOnPS3=1
+
+[MinNumPlayers_Console UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTGameSettings:MinNetPlayers>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0,MaxValue=16,bIntRange=1,NudgeValue=1,CurrentValue=16)
+bRemoveOnPC=1
+
+[PrivateSlots UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTGameSettings:NumPrivateConnections>
+OptionType=UTOT_Slider
+RangeData=(MinValue=0,MaxValue=23,bIntRange=1,NudgeValue=1,CurrentValue=0)
+bRemoveOnPS3=1
+bRemoveOnPC=1
+
+[AllowKeyboard UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<UTGameSettings:AllowKeyboard>
+OptionType=UTOT_CollectionCheckBox
+bRemoveOnPC=true
+bRemoveOn360=true
+
+[ServerDescription UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<OnlinePlayerData:ServerDescription>
+OptionType=UTOT_EditBox
+EditBoxMaxLength=32
+bRemoveOn360=true
+bRemoveOnPS3=1
+
+[ServerMOTD UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<Registry:ServerMOTD>
+OptionType=UTOT_EditBox
+EditBoxMaxLength=512
+bRemoveOn360=true
+bRemoveOnPS3=1
+
+[ServerPassword UTUIDataProvider_MenuOption]
+OptionSet=Server
+DataStoreMarkup=<Registry:ServerPassword>
+OptionType=UTOT_EditBox
+EditBoxMaxLength=16
+bRemoveOn360=true
+bRemoveOnPS3=1
+
+[MatchType UTUIDataProvider_MenuOption]
+OptionSet=Client
+DataStoreMarkup=<UTStringList:MatchType>
+bRemoveOn360=1
+
+[MatchType360 UTUIDataProvider_MenuOption]
+OptionSet=Client
+DataStoreMarkup=<UTStringList:MatchType360>
+bRemoveOnPC=1
+bRemoveOnPS3=1
+
+[GameMode_Client UTUIDataProvider_MenuOption]
+OptionSet=Client
+DataStoreMarkup=<UTMenuItems:GameModeFilter>
+
+[StickConfiguration_PresetsPS3 UTUIDataProvider_MenuOption]
+OptionSet=PresetsPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_AnalogStickPreset>
+
+[ButtonPreset_PresetsPS3 UTUIDataProvider_MenuOption]
+OptionSet=PresetsPS3
+DataStoreMarkup=<UTStringList:PS3ButtonPresets>
+
+[StickConfiguration_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_AnalogStickPreset>
+
+[X_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonA>
+
+[Circle_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonB>
+
+[Square_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonX>
+
+[Triangle_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_ButtonY>
+
+[R1_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_RightBumper>
+
+[R2_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_RightTrigger>
+
+[R3_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_RightThumbstickPressed>
+
+[L1_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_LeftBumper>
+
+[L2_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_LeftTrigger>
+
+[L3_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_LeftThumbstickPressed>
+
+[DPadUp_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadUp>
+
+[DPadDown_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadDown>
+
+[DPadLeft_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadLeft>
+
+[DPadRight_KeysPS3 UTUIDataProvider_MenuOption]
+OptionSet=KeysPS3
+DataStoreMarkup=<OnlinePlayerData:ProfileData.GamepadBinding_DPadRight>
+
+[UTGame.UTUIDataStore_StringAliasMap]
+FakePlatform=0
+MenuInputMapArray=(FieldName="None",MappedText="")
+MenuInputMapArray=(FieldName="Term_Controller",Set="PC",MappedText="<Strings:UDKGameUI.Terms.Controller_PC>")
+MenuInputMapArray=(FieldName="Term_Controller",Set="PS3",MappedText="<Strings:UDKGameUI.Terms.Controller_PS3>")
+MenuInputMapArray=(FieldName="Term_Controller",Set="360",MappedText="<Strings:UDKGameUI.Terms.Controller_360>")
+MenuInputMapArray=(FieldName="Term_GamerCard",Set="PS3",MappedText="<Strings:UDKGameUI.Terms.GamerCard_PS3>")
+MenuInputMapArray=(FieldName="Term_GamerCard",Set="PC",MappedText="<Strings:UDKGameUI.Terms.GamerCard_PC>")
+MenuInputMapArray=(FieldName="Term_GamerCard",Set="360",MappedText="<Strings:UDKGameUI.Terms.GamerCard_360>")
+MenuInputMapArray=(FieldName="CycleTabs",Set="PS3",MappedText="CYCLE TABS")
+MenuInputMapArray=(FieldName="CycleTabs",Set="360",MappedText="CYCLE TABS")
+MenuInputMapArray=(FieldName="AnyKey",Set="PC",MappedText="<Strings:UDKGameUI.Generic.Fire> ")
+MenuInputMapArray=(FieldName="Accept",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_A> ")
+MenuInputMapArray=(FieldName="Cancel",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_B> ")
+MenuInputMapArray=(FieldName="Conditional1",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_Y> ")
+MenuInputMapArray=(FieldName="Conditional2",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_X> ")
+MenuInputMapArray=(FieldName="Start",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_Start> ")
+MenuInputMapArray=(FieldName="ShiftUp",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftBumper> ")
+MenuInputMapArray=(FieldName="ShiftDown",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_RightBumper> ")
+MenuInputMapArray=(FieldName="ShiftUpTrigger",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftTrigger> ")
+MenuInputMapArray=(FieldName="ShiftDownTrigger",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_RightTrigger> ")
+MenuInputMapArray=(FieldName="ShiftBothTrigger",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftTrigger><Strings:UDKGameUI.ButtonFont.Xenon_RightTrigger> ")
+MenuInputMapArray=(FieldName="Defaults",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_LeftTrigger> ")
+MenuInputMapArray=(FieldName="AnyKey",Set="360",MappedText="<Strings:UDKGameUI.ButtonFont.Xenon_A> ")
+MenuInputMapArray=(FieldName="Accept",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_X> ")
+MenuInputMapArray=(FieldName="Cancel",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Circle> ")
+MenuInputMapArray=(FieldName="Conditional1",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Triangle> ")
+MenuInputMapArray=(FieldName="Conditional2",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Square> ")
+MenuInputMapArray=(FieldName="Start",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Start> ")
+MenuInputMapArray=(FieldName="Select",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_Select> ")
+MenuInputMapArray=(FieldName="ShiftUp",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L1> ")
+MenuInputMapArray=(FieldName="ShiftDown",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_R1> ")
+MenuInputMapArray=(FieldName="ShiftUpTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2> ")
+MenuInputMapArray=(FieldName="ShiftDownTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_R2> ")
+MenuInputMapArray=(FieldName="ShiftBothTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2><Strings:UDKGameUI.ButtonFont.PS3_R2> ")
+MenuInputMapArray=(FieldName="LeftTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2> ")
+MenuInputMapArray=(FieldName="Defaults",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_L2> ")
+MenuInputMapArray=(FieldName="RightTrigger",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_R2> ")
+MenuInputMapArray=(FieldName="AnyKey",Set="PS3",MappedText="<Strings:UDKGameUI.ButtonFont.PS3_X> ")
+
+[IniVersion]
+0=1323742416.000000
+1=1331915010.000000
+2=1340226806.000000
+
+[magneticthumbs.UDNGame]
+bWarmupRound=False
+bForceMidGameMenuAtStart=False
+bLogGameplayEvents=False
+NetWait=15
+ClientProcessingTimeout=30
+WarmupTime=0
+LateEntryLives=1
+ResetTimeDelay=0
+GameplayEventsWriterClassName=
+RequiredMobileInputConfigs=(GroupName="UberGroup",RequireZoneNames=("UberStickMoveZone","UberStickLookZone","UberLookZone"),bIsAttractModeGroup=False)
+RequiredMobileInputConfigs=(GroupName="InitialFlybyGroup",RequireZoneNames=,bIsAttractModeGroup=False)
+bIsStandbyCheckingEnabled=False
+GoalScore=25
+MaxLives=0
+TimeLimit=20
+StandbyRxCheatTime=0.000000
+StandbyTxCheatTime=0.000000
+BadPingThreshold=0
+PercentMissingForRxStandby=0.000000
+PercentMissingForTxStandby=0.000000
+PercentForBadPing=0.000000
+JoinInProgressStandbyWaitTime=0.000000
+DefaultGameType=UTGame.UTDeathmatch
+DefaultMapPrefixes=(Prefix="DM",bUsesCommonPackage=False,GameType="UTGame.UTDeathmatch",AdditionalGameTypes=,ForcedObjects=)
+DefaultMapPrefixes=(Prefix="CTF",bUsesCommonPackage=False,GameType="UTGameContent.UTCTFGame_Content",AdditionalGameTypes=,ForcedObjects=)
+DefaultMapPrefixes=(Prefix="VCTF",bUsesCommonPackage=False,GameType="UTGameContent.UTVehicleCTFGame_Content",AdditionalGameTypes=,ForcedObjects=)
+AnimTreePoolSize=0
+
+
+
+</textarea><br><br>
+10.	After saving the .ini files, double click on the UDK Editor on the desktop, Compile the scripts when it asks you to and see the magic.<br>
+
+<br><img src="images/tutorials/Thirdperson/3.png" alt="Compile"/><br>
+ <br>
+<br>
+<h3>Adjusting the Camera Distance:</h3> <br>
+1.	Open the UDNPawn.uc and go to the last line of the code.<br>
+2.	You can see:<br><br>
+<h2>defaultproperties<br>
+{<br>
+}<br><br></h2>
+3.	Add this code between the braces<br><br>
+
+<h2>CamOffset=(X=15.0,Y=40.0,Z=-20.0)<br><br></h2>
+
+4.	Adjust the co-ordinates for changes.<br>
+<br><br><br>
+
+Notes: <br>
+1.	To view the third person camera view, change the game type in the world properties (Refer to the Important Note -2 at the beginning of this &nbsp&nbsp&nbsp&nbsp&nbsp &nbsp&nbsp&nbsp&nbsptutorial.)<br>
+2.	The above code can also be obtained from <a href="http://udn.epicgames.com/Three/CameraTechnicalGuide.html"  <label>"The Camera Technical Guide-UDK.com".</label></a></li> <br><br>
+<img src="images/tutorials/Thirdperson/4.png" alt="UDN Camera Guide"/><br><br>
+
+3.	While navigating through UDK folders, UDK-xxxx-xx refers to the version of UDK<br>
+4.	The code given above should be properly copied and saved.You may have to change the file type to save to 'all files' from 'text files'<br><br>
+<img src="images/tutorials/Thirdperson/5.png" alt="Save as Type"/><br><br>
+
+5.	If you change the class name from magneticthumbs to any custom name, don't forget to change it in all the required files.<br>
+6.	If you come across any errors or warnings in the compilation, try again.<br>
+7.	Don't forget to backup the files before replacing. We are not responsible for any damage or information loss caused.<br>
+
+						</div>
+					</div>
+				</article>
+			</div>
+		</div>
+		<div class="main">
+<!--content end-->
+<!--footer -->
+			<footer>
+            <ul id="icons">
+               <li class="first">Follow Us:</li>
+               <li><a href="http://www.facebook.com/misplacedminds" class="normaltip" title="Facebook"><img src="images/icon1.jpg" alt="fb"></a></li>
+                              <li><a href="#" class="normaltip" title="YouTube"><img src="images/icon4.jpg" alt=""></a></li>
+            </ul>
+            www.misplacedminds.com &copy; 2012-2018 <br>Designed by <a href="http://www.chandradhar.com/" target="_blank">Chandradhar, Misplaced Minds</a><br>
+            <!-- {%FOOTER_LINK} -->
+         </footer>
+<!--footer end-->
+		</div>
+		<script type="text/javascript"> Cufon.now(); </script>
+	</body>
+</html>
