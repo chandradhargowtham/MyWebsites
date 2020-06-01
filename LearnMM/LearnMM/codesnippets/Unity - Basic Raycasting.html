@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+    <TITLE>Raycasting in Unity</TITLE>
+    <META NAME="GENERATOR" CONTENT="OpenOffice 4.1.7  (Win32)">
+    <META NAME="CREATED" CONTENT="0;0">
+    <META NAME="CHANGEDBY" CONTENT="Mr.C ">
+    <META NAME="CHANGED" CONTENT="20200412;14085153">
+
+</HEAD>
+
+<BODY>
+    <PRE CLASS="western"><B>What is Raycasting:</B>
+
+Consider a man with a gun. When he shoots, the bullet travels in a straight line for some distance 'x' and collides with some object (What happens next isn't our concern and imagine that it will collide with some object and will not just fly off and lose acceleration).
+
+
+
+Here,
+
+1. Consider the point where the bullet was shot as Point A.
+
+2. If we draw a line from the origin Point (I.e Point A) in the direction of travel, we can identify the objects that are intersecting/colliding with the ray.
+
+This method is called <B>Raycasting</B>.
+
+
+
+If you want to make a shooting game, where Left Mouse Click == shoot and there is a crosshair to aim.
+
+So the condition can be as follows:
+
+
+
+if (LMB Clicked == true and bullet ray touching enemy == true) then {enemy health = health -10;}
+
+
+
+This is a very basic level of interpretation and there can be many more conditions involved like ammo quantity, type of enemy etc.
+
+
+
+<B>Raycasting In Unity:</B>
+
+
+
+We have to create :
+
+1. A ray which will be cast based on our code.
+
+2. A RayCast Hit : When the ray is cast and it hits/collides with something, and output is produced which is a Raycast Hit.
+
+3. Our code logic (eg. When should the code run and what it should do after hitting)
+
+
+
+<B>Example:</B>
+
+
+
+In the below code, if( LMB is clicked and the raycast is hitting something) then , the name of the Object that is collided is Debug Logged.
+
+
+<B>Code:</B>
+<textarea readonly>
+	void Update()
+
+{
+
+Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+RaycastHit hit;
+
+if(Physics.Raycast(ray,out hit) && Input.GetMouseButton(0))
+
+{
+
+Debug.LogError(hit.transform.gameObject.name);
+
+}
+
+}
+</textarea>
+Explanation:
+
+
+
+1. Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+Here, we have defined a Ray which is attached to the mouse position on screen.
+
+
+
+
+
+2. if(Physics.Raycast(ray,out hit) &amp;&amp; Input.GetMouseButton(0))
+
+We use the method Physics.Raycast() and the input will be our ray and the output argument would be the raycast hit.</PRE>
+
+</BODY>
+
+</HTML>

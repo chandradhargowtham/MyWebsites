@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+    <TITLE></TITLE>
+    <META NAME="GENERATOR" CONTENT="OpenOffice 4.1.7  (Win32)">
+    <META NAME="CREATED" CONTENT="0;0">
+    <META NAME="CHANGED" CONTENT="0;0">
+    <STYLE TYPE="text/css">
+        <!-- @page {
+            margin: 0.79in
+        }
+        
+        P {
+            margin-bottom: 0.08in
+        }
+        
+        PRE.western {
+            font-family: "Times New Roman", serif
+        }
+        
+        PRE.cjk {
+            font-family: "NSimSun", monospace
+        }
+        
+        -->
+    </STYLE>
+</HEAD>
+
+<BODY LANG="en-US" DIR="LTR">
+    <PRE CLASS="western"><B>Unity Color Class:</B>
+
+
+To change color, we can use folowing methods:
+
+	&gt; bkg.color = Color.blue;
+
+<B>To change color by assigning custom values:</B>
+
+1. bkg.color = new Color(1f,0f,0f,.85f);
+
+	&gt;  Here, the Color Constructor takes either 3 or 4 values - RGB and (4th param) Alpha Value for transparency.
+	&gt;  All the parameters are in float format and only take values from 0.0 to 1.0.
+
+2. bkg.color = new Color32(255,0,0,90);
+
+	&gt;  To specifically use 0 to 255 values, use Color32 which takes Byte parameters.
+
+3. bkg.color = new Color(255/255,0/255,0/255,90);
+
+	&gt;  Also gives same output as above.
+
+
+</PRE>
+</BODY>
+
+</HTML>

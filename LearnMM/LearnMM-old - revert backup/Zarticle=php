@@ -1,0 +1,1 @@
+<?php include "header/header.html" ?><?php include "articles/" ?><?php include "footer/footer.html" ?>

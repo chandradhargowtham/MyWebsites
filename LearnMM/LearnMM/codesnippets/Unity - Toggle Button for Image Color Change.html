@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+    <TITLE></TITLE>
+    <META NAME="GENERATOR" CONTENT="OpenOffice 4.1.7  (Win32)">
+    <META NAME="AUTHOR" CONTENT="Mr.C ">
+    <META NAME="CREATED" CONTENT="20200412;22183696">
+    <META NAME="CHANGEDBY" CONTENT="Mr.C ">
+    <META NAME="CHANGED" CONTENT="20200412;22190599">
+    <STYLE TYPE="text/css">
+        <!-- @page {
+            margin: 0.79in
+        }
+        
+        P {
+            margin-bottom: 0.08in
+        }
+        
+        A:link {
+            so-language: zxx
+        }
+        
+        -->
+    </STYLE>
+</HEAD>
+
+<BODY LANG="en-US" DIR="LTR">
+    <P STYLE="margin-bottom: 0in">// The Image,Button gameobjects created must be given access either through unity or getComponent method.</P>
+    <P STYLE="margin-bottom: 0in">// This file is attached to an empty gameobject and then that gameobject is attached to a button onclick method.
+    </P>
+    <P STYLE="margin-bottom: 0in">
+        <BR>
+    </P>
+    <P STYLE="margin-bottom: 0in">using System.Collections;</P>
+    <P STYLE="margin-bottom: 0in">using System.Collections.Generic;</P>
+    <P STYLE="margin-bottom: 0in">using UnityEngine.UI;</P>
+    <P STYLE="margin-bottom: 0in">using UnityEngine;</P>
+    <P STYLE="margin-bottom: 0in">
+        <BR>
+    </P>
+    <P STYLE="margin-bottom: 0in">public class bkgColor : MonoBehaviour</P>
+    <P STYLE="margin-bottom: 0in">{</P>
+    <P STYLE="margin-bottom: 0in"> public Image bkg;</P>
+    <P STYLE="margin-bottom: 0in"> public Button toggle;</P>
+    <P STYLE="margin-bottom: 0in">
+    </P>
+    <P STYLE="margin-bottom: 0in"> //background change button function</P>
+    <P STYLE="margin-bottom: 0in"> public void ToggleBKG()</P>
+    <P STYLE="margin-bottom: 0in"> {</P>
+    <P STYLE="margin-bottom: 0in"> if (bkg.color==Color.blue)</P>
+    <P STYLE="margin-bottom: 0in"> {</P>
+    <P STYLE="margin-bottom: 0in"> bkg.color = Color.red;</P>
+    <P STYLE="margin-bottom: 0in">
+        toggle.GetComponentInChildren&lt;Text&gt;().text = &quot;Now red&quot;;</P>
+    <P STYLE="margin-bottom: 0in"> }</P>
+    <P STYLE="margin-bottom: 0in"> else</P>
+    <P STYLE="margin-bottom: 0in"> {</P>
+    <P STYLE="margin-bottom: 0in"> bkg.color = Color.blue;</P>
+    <P STYLE="margin-bottom: 0in">
+        toggle.GetComponentInChildren&lt;Text&gt;().text = &quot;Now Blue&quot;;</P>
+    <P STYLE="margin-bottom: 0in"> }</P>
+    <P STYLE="margin-bottom: 0in"> }</P>
+    <P STYLE="margin-bottom: 0in">}</P>
+</BODY>
+
+</HTML>

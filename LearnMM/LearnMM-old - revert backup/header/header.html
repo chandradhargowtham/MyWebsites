@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500&display=swap" rel="stylesheet"> 
+
+<head>
+<div class ="header">
+	
+<ul>
+	<li class="logo"><a href="index.php"><img src="images/header/mmlogo.png" height=80px width=80px  alt= "Misplaced Minds"></a></li>
+	<li><a href="tutorials.php"> Tutorials</a></li>
+	<li><a href="search.php"> Search</a></li>
+	<li><a href="contact.php"> Contact</a></li>	
+	<li><a href="pageMaker.php"> Admin Tools</a></li>	
+</ul>
+</div>
+</head>
+<body>
+</body>
+</html>
+<!--  Inline CSS Used for easy access of different parts -->
+<style>
+.header
+{
+	background-color: black;
+	padding: 1px;
+}
+
+.header>ul>li 
+{
+	display: inline-block;
+	padding: 20px;
+}
+.header>ul>li>a
+{
+	text-decoration: none;
+	color: white;
+	font-family: ubuntu;
+	padding: 20px;
+}
+.header>ul>li>a:hover
+{
+	background-color: #fdd809;
+	color:black;
+}
+.header>ul>li:nth-child(1)>a
+{
+	padding: 0px;
+	background-color: black;
+
+}
+li>a>img
+{
+	margin-left: 0px;
+	margin-bottom:  -20px;
+	position : relative;
+	
+}
+@media only screen and (max-width: 600px) {
+  .header>ul>li 
+{
+	margin-left: 25%;
+	display: block;
+	padding: 20px;
+	
+}
+
+.header>ul>li:nth-child(1)>a
+{
+	margin-left: 10%;
+}
+}
+
+@media only screen and (max-width: 400px) {
+  .header>ul>li 
+{
+	margin-left: 25%;
+	display: block;
+	padding: 20px;
+	
+}
+
+
+</style>
